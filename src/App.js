@@ -3,6 +3,18 @@ import "./App.css";
 import axios from "axios";
 
 const apiEndpoint = "https://jsonplaceholder.typicode.com/posts";
+axios.interceptors.response.use(null, (error) => {
+  const expectedError =
+    error.response &&
+    error.response.status >= 400 &&
+    error.response.status < 500;
+  if (!expectedError) {
+    console.log("Logging Error", error);
+    alert("An unexpected error occured");
+  }
+
+  return Promise.reject(error);
+});
 class App extends Component {
   state = {
     posts: [],
@@ -39,27 +51,10 @@ class App extends Component {
     this.setState({ posts });
 
     try {
-      // await axios.delete(apiEndpoint + "/" + post.id);
-
-      // simulate expected error
-      await axios.delete(apiEndpoint + "/" + "invalidId");
-
-      // simulate unexpected erroe
-      await axios.delete("s" + apiEndpoint + "/" + post.id);
+      await axios.delete(apiEndpoint + "/" + post.id);
     } catch (ex) {
-      // Expected Error => 404 (Not Found), 400 ( Bad request )
-      // Ex: 404 => Deleting already deleted Post, 400 => Submitting Form with invalid data
-
-      // Unexpected Error => Network down, server down, db down, bug
-
-      // ex.request => set to value if submitted a succesful request to server else to null
-      // ex.response => set to null if there is an issue from code/server
       if (ex.response && ex.response.status === 404) {
         alert("This post has already been deleted!");
-      } else {
-        // This is log is not displayed to user but stored somewhere for debugging
-        console.log("Logging Error", ex);
-        alert("An unexpected error occured");
       }
       this.setState({ posts: originalState });
     }
